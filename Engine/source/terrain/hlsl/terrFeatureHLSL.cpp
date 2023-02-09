@@ -46,7 +46,7 @@ namespace
       FEATUREMGR->registerFeature( MFT_TerrainParallaxMap, new NamedFeatureHLSL( "Terrain Parallax Texture" ) );   
       FEATUREMGR->registerFeature( MFT_TerrainDetailMap, new TerrainDetailMapFeatHLSL );
       FEATUREMGR->registerFeature( MFT_TerrainNormalMap, new TerrainNormalMapFeatHLSL );
-      FEATUREMGR->registerFeature( MFT_TerrainMacroMap, new NamedFeatureHLSL("TerrainMacroMap Deprecated")); // new TerrainMacroMapFeatHLSL);
+      FEATUREMGR->registerFeature( MFT_TerrainMacroMap, new TerrainMacroMapFeatHLSL);
       FEATUREMGR->registerFeature( MFT_TerrainLightMap, new TerrainLightMapFeatHLSL );
       FEATUREMGR->registerFeature( MFT_TerrainSideProject, new NamedFeatureHLSL( "Terrain Side Projection" ) );
       FEATUREMGR->registerFeature( MFT_TerrainHeightBlend, new TerrainHeightMapBlendHLSL );
@@ -160,6 +160,42 @@ Var* TerrainFeatHLSL::_getDetailMapArray()
    return detailMapArray;
 }
 
+Var* TerrainFeatHLSL::_getMacroMapSampler()
+{
+   String name("macroMapSampler");
+   Var* detailMapSampler = (Var*)LangElement::find(name);
+
+   if (!detailMapSampler)
+   {
+      detailMapSampler = new Var;
+      detailMapSampler->setName(name);
+      detailMapSampler->setType("SamplerState");
+      detailMapSampler->uniform = true;
+      detailMapSampler->sampler = true;
+      detailMapSampler->constNum = Var::getTexUnitNum();
+   }
+
+   return detailMapSampler;
+}
+
+Var* TerrainFeatHLSL::_getMacroMapArray()
+{
+   String name("macroMapArray");
+   Var* detailMapArray = (Var*)LangElement::find(name);
+
+   if (!detailMapArray)
+   {
+      detailMapArray = new Var;
+      detailMapArray->setName(name);
+      detailMapArray->setType("Texture2DArray");
+      detailMapArray->uniform = true;
+      detailMapArray->texture = true;
+      detailMapArray->constNum = _getMacroMapSampler()->constNum;
+   }
+
+   return detailMapArray;
+}
+
 Var* TerrainFeatHLSL::_getNormalMapSampler()
 {
    String name("normalMapSampler");
@@ -254,7 +290,7 @@ Var* TerrainFeatHLSL::_getDetailIdStrengthParallax()
 
 Var* TerrainFeatHLSL::_getMacroIdStrengthParallax()
 {
-   String name( String::ToString( "macroIdStrengthParallax%d", getProcessIndex() ) );
+   String name( String::ToString( "macroIdStrengthParallax", getProcessIndex() ) );
 
    Var *detailInfo = (Var*)LangElement::find( name );
    if ( !detailInfo )
@@ -265,6 +301,8 @@ Var* TerrainFeatHLSL::_getMacroIdStrengthParallax()
       detailInfo->uniform = true;
       detailInfo->constSortPos = cspPotentialPrimitive;
    }
+
+   detailInfo->arraySize = mMax(detailInfo->arraySize, getProcessIndex() + 1);
 
    return detailInfo;
 }
@@ -865,12 +903,12 @@ void TerrainMacroMapFeatHLSL::processPix(   Vector<ShaderComponent*> &componentL
    // If we're using SM 3.0 then take advantage of 
    // dynamic branching to skip layers per-pixel.
    if ( GFX->getPixelShaderVersion() >= 3.0f )
-      meta->addStatement( new GenOp( "   if ( @ > 0.0f )\r\n", detailBlend ) );
+      meta->addStatement( new GenOp( "   if ( @ > 0.0f && @.w > 0.0f )\r\n", detailBlend, inDet) );
 
    meta->addStatement( new GenOp( "   {\r\n" ) );
 
-   Var* detailMapArray = _getDetailMapArray();
-   Var* detailMapSampler = _getDetailMapSampler();
+   Var* detailMapArray = _getMacroMapArray();
+   Var* detailMapSampler = _getMacroMapSampler();
 
    // Note that we're doing the standard greyscale detail 
    // map technique here which can darken and lighten the 
