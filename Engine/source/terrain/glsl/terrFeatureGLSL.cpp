@@ -250,7 +250,7 @@ void TerrainBaseMapFeatGLSL::processVert( Vector<ShaderComponent*> &componentLis
    {
       Var* inNormal = (Var*)LangElement::find("normal");
       meta->addStatement( 
-         new GenOp("   @.z = dot( normalize( vec3( @.x, @.y, 0 ) ), vec3( 0, 1, 0 ) );\r\n",
+         new GenOp("   @.z = abs( dot( normalize( vec3( @.x, @.y, 0.001f ) ), vec3( 0, 1, 0 ) ) );\r\n",
             outTex, inNormal, inNormal));
       meta->addStatement(
          new GenOp("   @.w = 1.0 - dot( normalize( @.xyz ), vec3( 0, 0, 1 ) );\r\n",
