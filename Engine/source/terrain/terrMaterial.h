@@ -97,6 +97,10 @@ protected:
 
    F32 mBlendContrast;
 
+   F32 mBlendHardness;
+
+   static bool _setBlendHardness(void* obj, const char* index, const char* data); // must be clamped or shader may divide by zero
+
 public:
 
    TerrainMaterial();
@@ -137,6 +141,8 @@ public:
    F32 getBlendDepth() const { return mBlendDepth; }
 
    F32 getBlendContrast() const { return mBlendContrast; }
+
+   F32 getBlendHardness() const { return mBlendHardness; }
 
    bool getIsSRGB() const { return mIsSRGB; }
 
