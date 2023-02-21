@@ -99,8 +99,6 @@ protected:
 
    F32 mBlendHardness;
 
-   static bool _setBlendHardness(void* obj, const char* index, const char* data); // must be clamped or shader may divide by zero
-
 public:
 
    TerrainMaterial();
