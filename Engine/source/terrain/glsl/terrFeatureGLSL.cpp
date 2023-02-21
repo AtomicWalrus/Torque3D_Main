@@ -821,14 +821,6 @@ void TerrainMacroMapFeatGLSL::processPix(   Vector<ShaderComponent*> &componentL
          gbNormal, gbNormal, viewToTangent, detailBlend, detCoord ) );
    }
 
-   //Var *detailColor = (Var*)LangElement::find( "macroColor" ); 
-   //if ( !detailColor )
-   //{
-   //   detailColor = new Var;
-   //   detailColor->setType( "vec4" );
-   //   detailColor->setName( "macroColor" );
-   //   meta->addStatement( new GenOp( "   @;\r\n", new DecOp( detailColor ) ) );
-   //}
    Var* detailColor = (Var*)LangElement::find(String::ToString("macroColor%d", detailIndex));
    if ( !detailColor )
    {
