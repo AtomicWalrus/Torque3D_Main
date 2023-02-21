@@ -694,17 +694,8 @@ void TerrainDetailMapFeatHLSL::processPix(   Vector<ShaderComponent*> &component
       blendHardness->constSortPos = cspPrimitive;
    }
 
-   //meta->addStatement(new GenOp("   @ *= @.y;\r\n", detailColor, new IndexOp(detailInfo, detailIndex)));
-   if (fd.features[MFT_TerrainHeightBlend])
-   {
-      meta->addStatement(new GenOp("   @ *= @.y;\r\n",
-         detailColor, new IndexOp(detailInfo, detailIndex), detailBlend, blendHardness));
-   }
-   else
-   {
-      meta->addStatement(new GenOp("   @ *= @.y * @;\r\n",
-         detailColor, new IndexOp(detailInfo, detailIndex), detailBlend));
-   }
+   meta->addStatement(new GenOp("   @ *= @.y;\r\n",
+      detailColor, new IndexOp(detailInfo, detailIndex)));
 
    if (!fd.features.hasFeature(MFT_TerrainNormalMap))
    {
@@ -967,21 +958,8 @@ void TerrainMacroMapFeatHLSL::processPix(   Vector<ShaderComponent*> &componentL
       blendHardness->constSortPos = cspPrimitive;
    }
 
-   // This fade-out based on distance between textures will be handled differently by the height blend if it's enabled
-   if (fd.features[MFT_TerrainHeightBlend])
-   {
-      meta->addStatement(new GenOp("   @ *= @.y;\r\n",
-         detailColor, new IndexOp(detailInfo, detailIndex), detailBlend, blendHardness));
-   }
-   else
-   {
-      meta->addStatement(new GenOp("   @ *= @.y * @;\r\n",
-         detailColor, new IndexOp(detailInfo, detailIndex), detailBlend));
-   }
-
-   ShaderFeature::OutputTarget target = (fd.features[MFT_isDeferred]) ? RenderTarget1 : DefaultTarget;
-
-   Var *outColor = (Var*)LangElement::find( getOutputTargetVarName(target) );
+   meta->addStatement(new GenOp("   @ *= @.y;\r\n",
+      detailColor, new IndexOp(detailInfo, detailIndex)));
 
    output = meta;
 }
