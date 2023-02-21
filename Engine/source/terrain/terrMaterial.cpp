@@ -25,6 +25,7 @@
 #include "console/consoleTypes.h"
 #include "gfx/gfxTextureManager.h"
 #include "gfx/bitmap/gBitmap.h"
+#include "console/typeValidators.h"
 
 #ifdef TORQUE_TOOLS
 #include "console/persistenceManager.h"
@@ -91,16 +92,7 @@ TerrainMaterial::~TerrainMaterial()
 {
 }
 
-bool TerrainMaterial::_setBlendHardness(void* obj, const char* index, const char* data)
-{
-   TerrainMaterial* terrainMat = static_cast<TerrainMaterial*>(obj);
-
-   F32 newVal = dAtof(data);
-   newVal = mClampF(newVal, 0.0f, 0.999f); // algorithm requires a value 0 <= x < 1.0
-   terrainMat->mBlendHardness = newVal;
-
-   return false;
-}
+FRangeValidator hardnessValidator(0.0f, 0.999f);
 
 void TerrainMaterial::initPersistFields()
 {
@@ -118,9 +110,8 @@ void TerrainMaterial::initPersistFields()
    addField("blendHeightContrast", TypeF32, Offset(mBlendContrast, TerrainMaterial), "A fixed value to add while blending using heightmap-based blending."
       "Higher numbers = larger blend radius.");
 
-   addProtectedField("blendHeightHardness", TypeF32, Offset(mBlendHardness, TerrainMaterial),
-      &TerrainMaterial::_setBlendHardness, &defaultProtectedGetFn,
-      "How sharply this layer blends with other textures. 0-1, soft to hard.");
+   addFieldV("blendHeightHardness", TypeF32, Offset(mBlendHardness, TerrainMaterial), &hardnessValidator, "How sharply this layer blends with other textures."
+      "0->1, soft->hard.");
 
    INITPERSISTFIELD_IMAGEASSET(DetailMap, TerrainMaterial, "Raises and lowers the RGB result of the Base Albedo up close.");
    addField( "detailSize", TypeF32, Offset( mDetailSize, TerrainMaterial ), "Used to scale the detail map to the material square" );
