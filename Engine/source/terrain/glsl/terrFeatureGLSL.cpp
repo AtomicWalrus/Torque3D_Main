@@ -605,16 +605,6 @@ void TerrainDetailMapFeatGLSL::processPix(   Vector<ShaderComponent*> &component
 		   detailColor, detailMapArray, detCoord, new IndexOp(detailInfo, detailIndex)));
    }
 
-   Var* blendHardness = (Var*)LangElement::find(String::ToString("blendHardness%d", detailIndex));
-   if (!blendHardness)
-   {
-      blendHardness = new Var;
-      blendHardness->setType("float");
-      blendHardness->setName(String::ToString("blendHardness%d", detailIndex));
-      blendHardness->uniform = true;
-      blendHardness->constSortPos = cspPrimitive;
-   }
-
    meta->addStatement(new GenOp("   @ *= @.y;\r\n",
       detailColor, new IndexOp(detailInfo, detailIndex)));
 
@@ -871,16 +861,6 @@ void TerrainMacroMapFeatGLSL::processPix(   Vector<ShaderComponent*> &componentL
    {
 	   meta->addStatement(new GenOp("   @ = ( tex2D( @, vec3(@.xy, @.x) ) * 2.0 ) - 1.0;\r\n",
 		   detailColor, detailMapArray, detCoord, new IndexOp(detailInfo, detailIndex)));
-   }
-
-   Var* blendHardness = (Var*)LangElement::find(String::ToString("blendHardness%d", detailIndex));
-   if (!blendHardness)
-   {
-      blendHardness = new Var;
-      blendHardness->setType("float");
-      blendHardness->setName(String::ToString("blendHardness%d", detailIndex));
-      blendHardness->uniform = true;
-      blendHardness->constSortPos = cspPrimitive;
    }
 
    meta->addStatement(new GenOp("   @ *= @.y;\r\n",
