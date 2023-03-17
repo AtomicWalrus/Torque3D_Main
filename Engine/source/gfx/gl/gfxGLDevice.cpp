@@ -832,6 +832,7 @@ void GFXGLDevice::setClipRect( const RectI &inRect )
    //
    //mProjectionMatrix *= translate;
 
+   static Point4F pt;
    F32 l = F32(mClip.point.x);
    F32 r = F32(mClip.point.x + mClip.extent.x);
    F32 b = F32(mClip.point.y + mClip.extent.y);
