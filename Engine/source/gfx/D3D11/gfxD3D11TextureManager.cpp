@@ -173,7 +173,14 @@ void GFXD3D11TextureManager::_innerCreateTexture( GFXD3D11TextureObject *retTex,
 			desc.CPUAccessFlags = cpuFlags;
 			//depth stencil must be a typeless format if it is bound on render target and shader resource simultaneously
 			// we'll send the real format for the creation of the views
-			desc.Format =  DXGI_FORMAT_R24G8_TYPELESS; 
+         // [ZREV] pick appropriate matching texture format for the depth buffer format
+         if (format == GFXFormatD24S8)
+         {
+			   desc.Format =  DXGI_FORMAT_R24G8_TYPELESS; 
+         }
+         else
+			   desc.Format = DXGI_FORMAT_R32G8X24_TYPELESS;
+         // [/ZREV]
 			desc.MipLevels = numMipLevels;
 			desc.SampleDesc.Count = antialiasLevel;
 			desc.SampleDesc.Quality = numQualityLevels;

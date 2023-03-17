@@ -613,6 +613,32 @@ Var* ShaderFeatureHLSL::getModelView(  Vector<ShaderComponent*> &componentList,
    return modelview;
 }
 
+Var* ShaderFeatureHLSL::getModelView2Step(Vector<ShaderComponent*>& componentList,
+   bool useInstancing,
+   MultiLine* meta)
+{
+   Var* modelview = (Var*)LangElement::find("modelview");
+   if (modelview)
+      return modelview;
+
+   Var* worldViewOnly = (Var*)LangElement::find("worldToCamera");
+   if (worldViewOnly == NULL)
+   {
+      worldViewOnly = new Var("worldToCamera", "float4x4");
+      worldViewOnly->uniform = true;
+      worldViewOnly->constSortPos = cspPass;
+   }
+
+
+   Var* objTrans = getObjTrans(componentList, useInstancing, meta);
+   if (useInstancing)
+      meta->addStatement(new GenOp("// Instancing!\r\n"));
+
+   modelview = new Var("modelview", "float4x4");
+   meta->addStatement(new GenOp("   @ = mul( @, @ );\r\n", new DecOp(modelview), worldViewOnly, objTrans));
+   return modelview;
+}
+
 Var* ShaderFeatureHLSL::getWorldView(  Vector<ShaderComponent*> &componentList,                                       
                                        bool useInstancing,
                                        MultiLine *meta )
@@ -1774,14 +1800,22 @@ void VertPositionHLSL::processVert( Vector<ShaderComponent*> &componentList,
 
    MultiLine *meta = new MultiLine;
 
-   Var *modelview = getModelView( componentList, fd.features[MFT_UseInstancing], meta ); 
+   Var* modelview = getModelView2Step(componentList, fd.features[MFT_UseInstancing], meta);
 
-   meta->addStatement( new GenOp( "   @ = mul(@, float4(@.xyz,1));\r\n", 
-      outPosition, modelview, inPosition ) );
+   Var* projection = (Var*)LangElement::find("projection");
+   if (projection == NULL)
+   {
+      projection = new Var("projection", "float4x4");
+      projection->uniform = true;
+      projection->constSortPos = cspPrimitive;
+   }
+
+   meta->addStatement(new GenOp("   @ = mul(@, mul(@, float4(@.xyz,1)));\r\n",
+      outPosition, projection, modelview, inPosition));
 
    if (fd.materialFeatures[MFT_isBackground])
    {
-      meta->addStatement(new GenOp("   @ = @.xyww;\r\n", outPosition, outPosition));
+      meta->addStatement(new GenOp("   @.z = 0.0f;\r\n", outPosition)); // [ZREV]
    }
 
    output = meta;

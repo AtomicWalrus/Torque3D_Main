@@ -168,6 +168,7 @@ void PSSMLightShadowMap::_roundProjection(const MatrixF& lightMat, const MatrixF
 {
    // Round to the nearest shadowmap texel, this helps reduce shimmering
    MatrixF currentProj = GFX->getProjectionMatrix();
+   currentProj.reverseProjection(); // [ZREV]
    currentProj = cropMatrix * currentProj * lightMat;
 
    // Project origin to screen.
@@ -226,13 +227,17 @@ void PSSMLightShadowMap::_render(   RenderPassManager* renderPass,
    mTarget->attachTexture( GFXTextureTarget::Color0, mShadowMapTex );
    mTarget->attachTexture( GFXTextureTarget::DepthStencil, mShadowMapDepth );
    GFX->setActiveRenderTarget( mTarget );
-   GFX->clear( GFXClearStencil | GFXClearZBuffer | GFXClearTarget, ColorI(255,255,255), 1.0f, 0 );
+   GFX->clear( GFXClearStencil | GFXClearZBuffer | GFXClearTarget, ColorI(255,255,255), 0.0f, 0 ); // [ZREV]
 
    // Calculate our standard light matrices
    MatrixF lightMatrix;
    calcLightMatrices( lightMatrix, diffuseState->getCameraFrustum() );
    lightMatrix.inverse();
-   MatrixF lightViewProj = GFX->getProjectionMatrix() * lightMatrix;
+   // [ZREV]
+   MatrixF tempProjMat = GFX->getProjectionMatrix();
+   tempProjMat.reverseProjection();
+   MatrixF lightViewProj = tempProjMat * lightMatrix;
+   // [/ZREV]
 
    // TODO: This is just retrieving the near and far calculated
    // in calcLightMatrices... we should make that clear.
@@ -245,7 +250,7 @@ void PSSMLightShadowMap::_render(   RenderPassManager* renderPass,
 
    _calcSplitPos(fullFrustum);
    
-   mWorldToLightProj = GFX->getProjectionMatrix() * toLightSpace;
+   mWorldToLightProj = tempProjMat * toLightSpace; // [ZREV]
 
    // Apply the PSSM 
    const F32 savedSmallestVisible = TSShapeInstance::smSmallestVisiblePixelSize;
@@ -320,7 +325,9 @@ void PSSMLightShadowMap::_render(   RenderPassManager* renderPass,
 
       // Crop matrix multiply needs to be post-projection.
       MatrixF alightProj = GFX->getProjectionMatrix();
+      alightProj.reverseProjection(); // [ZREV]
       alightProj = cropMatrix * alightProj;
+      alightProj.reverseProjection(); // [ZREV]
 
       // Set our new projection
       GFX->setProjectionMatrix(alightProj);

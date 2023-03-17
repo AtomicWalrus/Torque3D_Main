@@ -160,6 +160,16 @@ bool MatrixF::fullInverse()
    return true;
 }
 
+// [ZREV]
+void MatrixF::reverseProjection()
+{
+   m[idx(0, 2)] = m[idx(0, 3)] - m[idx(0, 2)];
+   m[idx(1, 2)] = m[idx(1, 3)] - m[idx(1, 2)];
+   m[idx(2, 2)] = m[idx(2, 3)] - m[idx(2, 2)];
+   m[idx(3, 2)] = m[idx(3, 3)] - m[idx(3, 2)];
+}
+// [/ZREV]
+
 EulerF MatrixF::toEuler() const
 {
    const F32 * mat = m;
