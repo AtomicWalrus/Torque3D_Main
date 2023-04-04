@@ -173,7 +173,7 @@ void main()
    // }
    
    // Save world space camera dist/depth of the outgoing pixel
-   OUT_rippleTexCoord2.z = OUT_hpos.z;              
+   OUT_rippleTexCoord2.z = OUT_hpos.w; // Works with either depth model
 
    // Convert to reflection texture space   
    OUT_posPostWave = tMul( texGen, OUT_posPostWave );

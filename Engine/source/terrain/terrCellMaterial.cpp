@@ -198,6 +198,8 @@ void TerrainCellMaterial::setTransformAndEye(   const MatrixF &modelXfm,
    vEye.normalize( 1.0f / farPlane );
 
    mConsts->setSafe(mModelViewProjConst, modelViewProj);
+   mConsts->setSafe(mProjectionConst, projectXfm);
+   mConsts->setSafe(mWorldToCameraConst, viewXfm);
 
    if (mViewToObjConst->isValid() || mWorldViewOnlyConst->isValid())
    {
@@ -502,6 +504,8 @@ bool TerrainCellMaterial::_initShader(bool deferredMat,
 
    // Prepare the basic constants.
    mModelViewProjConst = mShader->getShaderConstHandle("$modelview");
+   mProjectionConst = mShader->getShaderConstHandle("$projection");
+   mWorldToCameraConst = mShader->getShaderConstHandle("$worldToCamera");
    mWorldViewOnlyConst = mShader->getShaderConstHandle("$worldViewOnly");
    mViewToObjConst = mShader->getShaderConstHandle("$viewToObj");
    mEyePosWorldConst = mShader->getShaderConstHandle("$eyePosWorld");

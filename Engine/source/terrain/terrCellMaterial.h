@@ -84,6 +84,8 @@ protected:
    GFXStateBlockRef mReflectionStateBlock;
 
    GFXShaderConstHandle *mModelViewProjConst;
+   GFXShaderConstHandle* mProjectionConst;
+   GFXShaderConstHandle* mWorldToCameraConst;
    GFXShaderConstHandle *mWorldViewOnlyConst;
    GFXShaderConstHandle *mViewToObjConst;
 
