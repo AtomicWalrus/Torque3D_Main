@@ -129,9 +129,10 @@ void GFXGLEnumTranslate::init()
    GFXGLTextureInternalFormat[GFXFormatB8G8R8A8] = GL_RGBA8;
    GFXGLTextureInternalFormat[GFXFormatR10G10B10A2] = GL_RGB10_A2;
    GFXGLTextureInternalFormat[GFXFormatR11G11B10] = GL_R11F_G11F_B10F;   
-   GFXGLTextureInternalFormat[GFXFormatD32] = GL_DEPTH32F_STENCIL8;// GL_DEPTH_COMPONENT32; // [ZREV] temp
+   GFXGLTextureInternalFormat[GFXFormatD32] = GL_DEPTH_COMPONENT32;
    GFXGLTextureInternalFormat[GFXFormatD24X8] = GL_DEPTH24_STENCIL8;
    GFXGLTextureInternalFormat[GFXFormatD24S8] = GL_DEPTH24_STENCIL8;
+   GFXGLTextureInternalFormat[GFXFormatD32FS8X24] = GL_DEPTH32F_STENCIL8; // [ZREV]
    GFXGLTextureInternalFormat[GFXFormatR16G16B16A16] = GL_RGBA16;
    GFXGLTextureInternalFormat[GFXFormatBC1] = GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
    GFXGLTextureInternalFormat[GFXFormatBC2] = GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
@@ -158,9 +159,10 @@ void GFXGLEnumTranslate::init()
    GFXGLTextureFormat[GFXFormatB8G8R8A8] = GL_BGRA;
    GFXGLTextureFormat[GFXFormatR10G10B10A2] = GL_RGBA;
    GFXGLTextureFormat[GFXFormatR11G11B10] = GL_RGB;
-   GFXGLTextureFormat[GFXFormatD32] = GL_DEPTH_STENCIL;//GL_DEPTH_COMPONENT; [ZREV]
+   GFXGLTextureFormat[GFXFormatD32] = GL_DEPTH_COMPONENT;
    GFXGLTextureFormat[GFXFormatD24X8] = GL_DEPTH_STENCIL;
    GFXGLTextureFormat[GFXFormatD24S8] = GL_DEPTH_STENCIL;
+   GFXGLTextureFormat[GFXFormatD32FS8X24] = GL_DEPTH_STENCIL; // [ZREV]
    GFXGLTextureFormat[GFXFormatR16G16B16A16] = GL_RGBA;
    GFXGLTextureFormat[GFXFormatBC1] = GL_RGBA;
    GFXGLTextureFormat[GFXFormatBC2] = GL_RGBA;
@@ -187,9 +189,10 @@ void GFXGLEnumTranslate::init()
    GFXGLTextureType[GFXFormatB8G8R8A8] = GL_UNSIGNED_BYTE;;
    GFXGLTextureType[GFXFormatR10G10B10A2] = GL_UNSIGNED_INT_10_10_10_2;
    GFXGLTextureType[GFXFormatR11G11B10] = GL_UNSIGNED_INT_10F_11F_11F_REV;
-   GFXGLTextureType[GFXFormatD32] = GL_FLOAT_32_UNSIGNED_INT_24_8_REV;// GL_UNSIGNED_INT; [ZREV]
+   GFXGLTextureType[GFXFormatD32] = GL_UNSIGNED_INT;
    GFXGLTextureType[GFXFormatD24X8] = GL_UNSIGNED_INT_24_8;
    GFXGLTextureType[GFXFormatD24S8] = GL_UNSIGNED_INT_24_8;
+   GFXGLTextureType[GFXFormatD32FS8X24] = GL_FLOAT_32_UNSIGNED_INT_24_8_REV; // [ZREV]
    GFXGLTextureType[GFXFormatR16G16B16A16] = GL_UNSIGNED_SHORT;
    GFXGLTextureType[GFXFormatBC1] = GL_UNSIGNED_BYTE;
    GFXGLTextureType[GFXFormatBC2] = GL_UNSIGNED_BYTE;

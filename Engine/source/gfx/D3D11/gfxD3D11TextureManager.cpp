@@ -178,7 +178,7 @@ void GFXD3D11TextureManager::_innerCreateTexture( GFXD3D11TextureObject *retTex,
          {
 			   desc.Format =  DXGI_FORMAT_R24G8_TYPELESS; 
          }
-         else
+         else // Note: right now only GFXFormatD24S8 and GFXFormatD32FS8U24 are supported. Additional cases required to support 16-bit depth for mobile.
 			   desc.Format = DXGI_FORMAT_R32G8X24_TYPELESS;
          // [/ZREV]
 			desc.MipLevels = numMipLevels;
