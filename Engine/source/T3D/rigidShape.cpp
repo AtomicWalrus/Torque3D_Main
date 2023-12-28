@@ -1350,7 +1350,14 @@ bool RigidShape::resolveContacts(Rigid& ns,CollisionList& cList,F32 dt)
 
             // Penetration force. This is actually a spring which
             // will seperate the body from the collision surface.
-            F32 zi = 2 * mFabs(mRigid.getZeroImpulse(r,c.normal));
+            // Contact fix 12/23: Convert "zero impulse" to force to match units of spring model. F = I / dt
+            // Contact model has 2 components:
+            // 1: Spring separates inter-penetrated surfaces over time (dist < collisionTol). Calculated using modified k*dx spring model (k ~ zi).
+            // 2: No additional inter-penetration is allowed (zero all momentum into surface) by modifying k (zi). Calculated by getZeroImpulse -> impulse -> converted to force (12/23 fix)
+            // Unit analysis notes on the original model:
+            //    -"zi" roughly acts as a spring constant, but with units of Force instead of the more common Force/Dist
+            //    -"collisionTol - distance" has units of distance, but is treated as a unitless scalar in the final force calculation.
+            F32 zi = 2 * mFabs(mRigid.getZeroImpulse(r,c.normal) / dt);
             F32 s = (mDataBlock->collisionTol - c.distance) * zi - ((vn / mDataBlock->contactTol) * zi);
             Point3F f = c.normal * s;
 
@@ -1362,7 +1369,8 @@ bool RigidShape::resolveContacts(Rigid& ns,CollisionList& cList,F32 dt)
             if (s > 0 && ul) 
             {
                uv /= -ul;
-               F32 u = ul * ns.getZeroImpulse(r,uv);
+               // Contact fix 12/23: Convert impulse to force.
+               F32 u = ul * ns.getZeroImpulse(r,uv) / dt;
                s *= mRigid.friction;
                if (u > s)
                   u = s;
