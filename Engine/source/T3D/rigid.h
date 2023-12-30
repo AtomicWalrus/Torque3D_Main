@@ -89,6 +89,7 @@ public:
    void setTransform(const MatrixF& mat);
 
    void setObjectInertia(const Point3F& r);
+   void setObjectInertia(const Point3F& r, bool sphere);
    void setObjectInertia();
    void invertObjectInertia();
 

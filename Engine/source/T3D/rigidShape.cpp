@@ -784,6 +784,8 @@ void RigidShape::processTick(const Move* move)
    if ( isMounted() )
       return;
 
+   //Con::printf("TICK RIGID SHAPE");
+
    // Warp to catch up to server
    if (mDelta.warpCount < mDelta.warpTicks) 
    {
@@ -903,6 +905,19 @@ bool RigidShape::onNewDataBlock(GameBaseData* dptr, bool reload)
    // Ignores massBox, just set sphere for now. Derived objects
    // can set what they want.
    mRigid.setObjectInertia();
+
+   // Set inertial tensor
+   // If the massbox is defined in all 3 dimensions, use that
+   if (mDataBlock->massBox.x > 0 && mDataBlock->massBox.y > 0 && mDataBlock->massBox.z > 0)
+      mRigid.setObjectInertia(mDataBlock->massBox);
+   else
+   {
+      // Option 1: Use an automatic box
+      mRigid.setObjectInertia(mObjBox.maxExtents - mObjBox.minExtents);
+      // Option 2: Use a sphere with a specific radius:
+      F32 radius = (mObjBox.maxExtents.x + mObjBox.maxExtents.y + mObjBox.maxExtents.z) / 3.0f;
+      mRigid.setObjectInertia(Point3F(radius, 0.0f, 0.0f), true);
+   }
 
    scriptOnNewDataBlock();
 
@@ -1326,6 +1341,8 @@ on the depth of penetration and the moment of inertia at the point of contact.
 */
 bool RigidShape::resolveContacts(Rigid& ns,CollisionList& cList,F32 dt)
 {
+   //Con::printf("TICK RIGID SHAPE -> CONTACTS");
+
    PROFILE_SCOPE(RigidShape_resolveContacts);
    // Use spring forces to manage contact constraints.
    bool collided = false;
@@ -1333,10 +1350,17 @@ bool RigidShape::resolveContacts(Rigid& ns,CollisionList& cList,F32 dt)
    for (S32 i = 0; i < cList.getCount(); i++) 
    {
       const Collision& c = cList[i];
+      // [RPG]
+      if (c.object == this)
+      {
+         //Con::printf("IMPOSSIBLE!!!!--------------------------------> Self-collision event?");
+         continue;
+      }
+      // [/RPG]
       if (c.distance < mDataBlock->collisionTol) 
       {
 
-         // Velocity into the surface
+         // Velocity intow the surface
          Point3F v,r;
          ns.getOriginVector(c.point,&r);
          ns.getVelocity(r,&v);
@@ -1350,15 +1374,14 @@ bool RigidShape::resolveContacts(Rigid& ns,CollisionList& cList,F32 dt)
 
             // Penetration force. This is actually a spring which
             // will seperate the body from the collision surface.
-            // Contact fix 12/23: Convert "zero impulse" to force to match units of spring model. F = I / dt
-            // Contact model has 2 components:
-            // 1: Spring separates inter-penetrated surfaces over time (dist < collisionTol). Calculated using modified k*dx spring model (k ~ zi).
-            // 2: No additional inter-penetration is allowed (zero all momentum into surface) by modifying k (zi). Calculated by getZeroImpulse -> impulse -> converted to force (12/23 fix)
-            // Unit analysis notes on the original model:
-            //    -"zi" roughly acts as a spring constant, but with units of Force instead of the more common Force/Dist
-            //    -"collisionTol - distance" has units of distance, but is treated as a unitless scalar in the final force calculation.
+            //F32 zi = 2 * mFabs(mRigid.getZeroImpulse(r,c.normal));
+            //F32 s = (mDataBlock->collisionTol - c.distance) * zi - ((vn / mDataBlock->contactTol) * zi);
             F32 zi = 2 * mFabs(mRigid.getZeroImpulse(r,c.normal) / dt);
-            F32 s = (mDataBlock->collisionTol - c.distance) * zi - ((vn / mDataBlock->contactTol) * zi);
+            //F32 s = (mDataBlock->collisionTol - c.distance) * zi -((vn / 2.0f) * zi);
+            F32 sForce = (mDataBlock->collisionTol - c.distance) * zi;
+            F32 sDamp = (vn / 2.0f) * zi;
+            F32 s = sForce - sDamp;
+            if (s < 0.0f) s = 0.0f;
             Point3F f = c.normal * s;
 
             // Friction impulse, calculated as a function of the
@@ -1369,7 +1392,6 @@ bool RigidShape::resolveContacts(Rigid& ns,CollisionList& cList,F32 dt)
             if (s > 0 && ul) 
             {
                uv /= -ul;
-               // Contact fix 12/23: Convert impulse to force.
                F32 u = ul * ns.getZeroImpulse(r,uv) / dt;
                s *= mRigid.friction;
                if (u > s)
@@ -1381,14 +1403,20 @@ bool RigidShape::resolveContacts(Rigid& ns,CollisionList& cList,F32 dt)
             p += f;
             mCross(r,f,&t);
             l += t;
+
+            // apply opposite force to other object if dynamic (enabled)
+            RigidShape* rShape = dynamic_cast<RigidShape*>(c.object);
+            if (true && rShape && c.object != this)
+            {
+               Point3F r2;
+               rShape->mRigid.getOriginVector(c.point, &r2);
+               rShape->mRigid.applyImpulse(r2, -f * dt);
+            }
+
+            ns.applyImpulse(r, f * dt);
          }
       }
    }
-
-   // Contact constraint forces act over time...
-   ns.linMomentum += p * dt;
-   ns.angMomentum += l * dt;
-   ns.updateVelocity();
    return true;
 }
 

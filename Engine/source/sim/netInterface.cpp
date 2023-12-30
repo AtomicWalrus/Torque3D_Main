@@ -439,7 +439,32 @@ void NetInterface::processServer()
       walk; walk = walk->getNext())
    {
       if(!walk->isConnectionToServer() && (walk->isLocalConnection() || walk->isNetworkConnection()))
+      {
          walk->checkPacketSend(false);
+         // Extra packets. The packet-handling algorithm is designed for this already:
+         // -> Only unsent messages and object updates will be included in subsequent packets (sent items are un-masked), so if there are no more unsent updates in waiting the additional packets will be empty.
+         // -> The packet receicpt system is designed to handle multiple sequential update packets arriving in a single tick due to network uncertainties.
+         // -> No object will ever receive muleopl
+         // -> The ack system can handle up to 30 outstanding packets, so in SP or high quality networking this is safe.
+         // -> In real-world networking conditions, order of arrival is not certain when multiple packets are sent in immediate succession like this.
+         //     Torque's networking is designed to intentionally drop out of order (late) packets, relying on the mask bit and packet acknowledgement(ack) systems to provide a resend of the lost data.
+         //       Becaue of this the following event sequence is possible on real-world networks:
+         //          -Server sends 2 packets to client, with updates for 15 objects in packet 1, and 6 more objects in packet 2.
+         //          -Client receives packet 2 first, processes updates for 6 objects.
+         //          -Client receives packet 1, throws it out due to ack system rules (The packet is old news and if anything was lost that wasn't also updated in packet 2, it'll be resent since we're going to "nack" it, reply that we didn't get it)
+         //       The problem here is that packet 1 contained the more critical updates for the tick, by the update priority rules of the sim. This would potentially include control obj correction events, which are important to deliver immediately when needed to minimize desync time.
+         //       ->  TL;DR, In this case sending 2 packets can potentially make the networking worse.
+         //       This can potentially be resolved by extending the ack system to consider "groups" of packets from the same send event
+
+         walk->checkPacketSend(true);
+         walk->checkPacketSend(true);
+         walk->checkPacketSend(true);
+         // this can't be reasonable
+         walk->checkPacketSend(true);
+         walk->checkPacketSend(true);
+         // ok but really
+         walk->checkPacketSend(true);
+      }
    }
 }
 

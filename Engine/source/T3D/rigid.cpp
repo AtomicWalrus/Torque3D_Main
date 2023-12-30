@@ -322,6 +322,35 @@ void Rigid::setObjectInertia(const Point3F& r)
    updateInertialTensor();
 }
 
+void Rigid::setObjectInertia(const Point3F& r, bool sphere)
+{
+   if (sphere)
+   {
+      // sphere of defined radius
+      objectInertia.identity();
+      F32 radius = r.x;
+      F32* f = objectInertia;
+      f[0] = f[5] = f[10] = (0.4f * mass * radius * radius);
+   }
+   else
+   {
+      // Rotational moment of inertia of a box
+      F32 ot = mass / 12.0f;
+      F32 a = r.x * r.x;
+      F32 b = r.y * r.y;
+      F32 c = r.z * r.z;
+
+      objectInertia.identity();
+      F32* f = objectInertia;
+      f[0] = ot * (b + c);
+      f[5] = ot * (c + a);
+      f[10] = ot * (a + b);
+   }
+
+   invertObjectInertia();
+   updateInertialTensor();
+}
+
 
 //----------------------------------------------------------------------------
 /** Set the rigid body moment of inertia
