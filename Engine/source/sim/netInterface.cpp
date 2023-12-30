@@ -439,7 +439,15 @@ void NetInterface::processServer()
       walk; walk = walk->getNext())
    {
       if(!walk->isConnectionToServer() && (walk->isLocalConnection() || walk->isNetworkConnection()))
+      {
          walk->checkPacketSend(false);
+         /*walk->checkPacketSend(true);
+         walk->checkPacketSend(true);
+         walk->checkPacketSend(true);
+         walk->checkPacketSend(true);
+         walk->checkPacketSend(true);
+         walk->checkPacketSend(true);*/
+      }
    }
 }
 
