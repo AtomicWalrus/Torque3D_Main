@@ -472,6 +472,16 @@ void Convex::updateWorkingList(const Box3F& box, const U32 colMask)
 
    // Clear objects off the working list that are no longer intersecting
    for (CollisionWorkingList* itr = mWorking.wLink.mNext; itr != &mWorking; itr = itr->wLink.mNext) {
+      // Polysoup optimization - seems weird, but we'll save time by just always rebuilding convexes for polysoup.
+      // The optimization of testing each convex to see if it's already in the list breaks down if you have 500+ convexes, doing that test is slower than just regenerating them all.
+      if (itr->mConvex->getType() == TSPolysoupConvexType)
+      {
+         CollisionWorkingList* cl = itr;
+         itr = itr->wLink.mPrev;
+         cl->free();
+         continue;
+      }
+      // /Polysoup optimization
       itr->mConvex->mTag = sTag;
       if ((!box.isOverlapped(itr->mConvex->getBoundingBox())) || (!itr->mConvex->getObject()->isCollisionEnabled())) {
          CollisionWorkingList* cl = itr;

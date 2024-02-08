@@ -1273,32 +1273,57 @@ bool TSMesh::buildConvexOpcode( const MatrixF &meshToObjectMat, const Box3F &nod
       // up, too.)
       const U32 curIdx = idx[i];
 
-      // See if the square already exists as part of the working set.
-      bool gotMatch = false;
-      CollisionWorkingList& wl = convex->getWorkingList();
-      for ( CollisionWorkingList* itr = wl.wLink.mNext; itr != &wl; itr = itr->wLink.mNext )
-      {
-         if( itr->mConvex->getType() != TSPolysoupConvexType )
-            continue;
+      // Polysoup optimization -- This code was meant to improve performance,
+      //       and it technically works in scenarios where the total collision list is < ~100-200 triangles,
+      //       but beyond that point the advantages of testing every triangle like this are outweighed
+      //       by the N^2 instances of the tests below. At 200 triangles in the working list for a static, very normal even if you're using
+      //       low-res collision meshes (which are also polysoup in TSStatic, just expected to be much simpler than the visible models)
+      //       you're doing all this below 40000 times. At 1000, 1 million times. This causes what appear to be lockups beyond around 6000 triangles (^2 = 36 mil),
+      //       but are reallu just very long buildConvexOpcode calls during Vehicle integration.
+      //
+      // If we skip this test then we just need to regenerate the entire mesh every time. This means we can also no longer use per-convex (per-triangle)
+      //       overlap tests to keep things in the list in Convex::updateWorkingList, we just need to delete the entire mesh's set of convexes and regenerate them.
+      //       Currently to keep things simple I'm just completely wiping TSStatic convexes and regenerating them every tick. This is technically a return to the
+      //       original worst-case unoptomized scenario you'd have when writing a polysoup implementation, but it ends up being so much faster (about 10x at 5000 tris)
+      //       in the cases that matter that it's definitely an improvement unless you're on mobile trying to keep to like 50-100 triangles in the collision list at all times
+      //       (in ONLY that case would the code below be meaningfully more efficient).
+      //
+      // Next steps:
+      //       This could be improved by introducing specifc logic for polysoup to discard vs store convexes on a mesh level, but for it to actually be an optimization it would have to avoid
+      //       running a box overlap test for every convex in the working list, which is the fundamentally slow thing about polysoup beyond this code below. So what you want to do is just do one
+      //       box overlap test for each mesh, but that's kind of annoying to do because you have a list of triangle convexes, not objects, at this stage of collison handling.
+      //          So:
+      //             -Iterate the list to find all the unique TSStatic meshes (splitting up meshes in the model is a good idea for polysoup in theory), box test each of them.
+      //             -Then during the normal workingList processing delete convexes that belong to meshes you didn't overlap with, instead of testing them individually.
+      //             -During statelist processing, do the same thing: Delete states belonging to meshes that were not overlapping in the workingList cycle.
+      //             -This again saves doing 1000's of box overlaps in favor of dozens.
 
-         const TSStaticPolysoupConvex *chunkc = static_cast<TSStaticPolysoupConvex*>( itr->mConvex );
+      //// See if the square already exists as part of the working set.
+      //bool gotMatch = false;
+      //CollisionWorkingList& wl = convex->getWorkingList();
+      //for ( CollisionWorkingList* itr = wl.wLink.mNext; itr != &wl; itr = itr->wLink.mNext )
+      //{
+      //   if( itr->mConvex->getType() != TSPolysoupConvexType )
+      //      continue;
 
-         if( chunkc->getObject() != TSStaticPolysoupConvex::smCurObject )
-            continue;
-               
-         if( chunkc->mesh != this )
-            continue;
+      //   const TSStaticPolysoupConvex *chunkc = static_cast<TSStaticPolysoupConvex*>( itr->mConvex );
 
-         if( chunkc->idx != curIdx )
-            continue;
+      //   if( chunkc->getObject() != TSStaticPolysoupConvex::smCurObject )
+      //      continue;
+      //         
+      //   if( chunkc->mesh != this )
+      //      continue;
 
-         // A match! Don't need to add it.
-         gotMatch = true;
-         break;
-      }
+      //   if( chunkc->idx != curIdx )
+      //      continue;
 
-      if( gotMatch )
-         continue;
+      //   // A match! Don't need to add it.
+      //   gotMatch = true;
+      //   break;
+      //}
+
+      //if( gotMatch )
+      //   continue;
 
       // Get the triangle...
       mOptTree->GetMeshInterface()->GetTriangle( vp, idx[i] );
